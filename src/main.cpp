@@ -26,9 +26,15 @@ Scheduler ts;
 #define led LED_BUILTIN
 ezLED statusLed(led);
 
+#define lightPin 4
+ezLED light(lightPin);
+
 //----------------- Reset WiFi Button ---------//
 #define resetWifiBtPin 0
 Button2 resetWifiBt;
+
+#define lightBtPin 33
+Button2 lightBt;
 
 //----------------- WiFi Manager --------------//
 const char* filename = "/config.txt";  // Config file name
@@ -57,6 +63,9 @@ WiFiManagerParameter customMqttPass("pass", "mqtt pass", mqttPass, 10);
 //----------------- MQTT ----------------------//
 WiFiClient   espClient;
 PubSubClient mqtt(espClient);
+
+#define subLightCommand "esp32/switch/light/command"
+#define pubLightState   "esp32/switch/light/state"
 
 //******************************** Tasks ************************************//
 void connectMqtt();
@@ -110,12 +119,13 @@ void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
         message += (char)payload[i];
     }
 
-    if (String(topic) == "test/subscribe/topic") {
-        if (message == "aValue") {
+    if (String(topic) == subLightCommand) {
+        // if (message == "ON") {
             // Do something
-        } else if (message == "otherValue") {
+        // } else if (message == "otherValue") {
             // Do something
-        }
+        // }
+        message == "ON" ? light.turnON() : light.turnOFF();
     }
 }
 
@@ -254,7 +264,7 @@ void wifiManagerSetup() {
 
 void subscribeMqtt() {
     _delnF("Subscribing to the MQTT topics...");
-    // mqtt.subscribe("test/subscribe/topic");
+    mqtt.subscribe(subLightCommand);
 }
 
 void publishMqtt() {
@@ -314,12 +324,20 @@ void resetWifiBtPressed(Button2& btn) {
     ESP.restart();
 }
 
+void toggleLight(Button2& btn) {
+    light.toggle();
+    mqtt.publish(pubLightState, light.getOnOff() == LED_ON ? "ON" : "OFF");
+}
+
 void setup() {
     _serialBegin(115200);
     statusLed.turnOFF();
     resetWifiBt.begin(resetWifiBtPin);
     resetWifiBt.setLongClickTime(5000);
     resetWifiBt.setLongClickDetectedHandler(resetWifiBtPressed);
+
+    lightBt.begin(lightBtPin);
+    lightBt.setTapHandler(toggleLight);
 
     while (!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
         _delnF("Failed to initialize LittleFS library");
@@ -335,4 +353,5 @@ void loop() {
     ts.execute();
     statusLed.loop();
     resetWifiBt.loop();
+    lightBt.loop();
 }
