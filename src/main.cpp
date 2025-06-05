@@ -18,16 +18,17 @@
 //----------------- TaskScheduler ------------------//
 Scheduler ts;
 
-#define FORMAT_LITTLEFS_IF_FAILED true
-
 #define deviceName "MyESP32"
 
 //----------------- esLED ---------------------//
-#define led LED_BUILTIN
-ezLED statusLed(led);
-
+#define led      LED_BUILTIN
 #define lightPin 4
-ezLED light(lightPin);
+
+const char* stateFile  = "/state.txt";
+bool        lightState = false;
+
+ezLED statusLed(led);
+// ezLED light(lightPin);
 
 //----------------- Reset WiFi Button ---------//
 #define resetWifiBtPin 0
@@ -113,6 +114,40 @@ void loadConfiguration(fs::FS& fs, const char* filename) {
     file.close();
 }
 
+void loadState(const char* fileName) {
+    File file = LittleFS.open(fileName, "r");
+    if (!file) {
+        _deln("Failed to open " + String(fileName));
+        return;
+    }
+
+    JsonDocument         doc;
+    DeserializationError error = deserializeJson(doc, file);
+    if (error) _deln("Failed to read " + String(fileName) + ", using default configuration");
+    lightState = doc["lightState"];
+
+    file.close();
+}
+
+void saveState(const char* fileName) {
+    File file = LittleFS.open(fileName, "w");
+    if (!file) {
+        _deln("Failed to open " + String(fileName) + " for writing");
+        return;
+    }
+
+    JsonDocument doc;
+    doc["lightState"] = lightState;
+
+    if (serializeJson(doc, file) == 0) _deln("Failed to write to " + String(fileName));
+
+    file.close();
+}
+
+void deviceInit() {
+    digitalWrite(lightPin, lightState);
+}
+
 void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
     String message;
     for (int i = 0; i < length; i++) {
@@ -120,12 +155,8 @@ void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
     }
 
     if (String(topic) == subLightCommand) {
-        // if (message == "ON") {
-            // Do something
-        // } else if (message == "otherValue") {
-            // Do something
-        // }
-        message == "ON" ? light.turnON() : light.turnOFF();
+        digitalWrite(lightPin, lightState = message == "ON" ? true : false);
+        saveState(stateFile);
     }
 }
 
@@ -198,9 +229,7 @@ void printFile(fs::FS& fs, const char* filename) {
 
     JsonDocument         doc;
     DeserializationError error = deserializeJson(doc, file);
-    if (error) {
-        _delnF("Failed to read file");
-    }
+    if (error) _delnF("Failed to read file");
 
     char buffer[512];
     serializeJsonPretty(doc, buffer);
@@ -269,7 +298,7 @@ void subscribeMqtt() {
 
 void publishMqtt() {
     _delnF("Publishing to the MQTT topics...");
-    // mqtt.publish("test/publish/topic", "Hello World!");
+    mqtt.publish(pubLightState, lightState ? "ON" : "OFF");
 }
 
 //----------------- Connect MQTT --------------//
@@ -317,6 +346,7 @@ void resetWifiBtPressed(Button2& btn) {
     statusLed.turnON();
     _delnF("Deleting the config file and resetting WiFi.");
     deleteFile(LittleFS, filename);
+    // deleteFile(LittleFS, stateFile);
     wifiManager.resetSettings();
     _deF(deviceName);
     _delnF(" is restarting.");
@@ -325,13 +355,18 @@ void resetWifiBtPressed(Button2& btn) {
 }
 
 void toggleLight(Button2& btn) {
-    light.toggle();
-    mqtt.publish(pubLightState, light.getOnOff() == LED_ON ? "ON" : "OFF");
+    // light.toggle();
+    lightState = !lightState;
+    digitalWrite(lightPin, lightState);
+    saveState(stateFile);
+    mqtt.publish(pubLightState, lightState ? "ON" : "OFF");
 }
 
 void setup() {
     _serialBegin(115200);
     statusLed.turnOFF();
+    pinMode(lightPin, OUTPUT);
+
     resetWifiBt.begin(resetWifiBtPin);
     resetWifiBt.setLongClickTime(5000);
     resetWifiBt.setLongClickDetectedHandler(resetWifiBtPressed);
@@ -339,17 +374,19 @@ void setup() {
     lightBt.begin(lightBtPin);
     lightBt.setTapHandler(toggleLight);
 
-    while (!LittleFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
+    while (!LittleFS.begin(true)) {  // true = format if failed
         _delnF("Failed to initialize LittleFS library");
         delay(1000);
     }
+
+    loadState(stateFile);
+    deviceInit();
 
     wifiManagerSetup();
     mqttInit();
 }
 
 void loop() {
-    // wifiManager.process();
     ts.execute();
     statusLed.loop();
     resetWifiBt.loop();
