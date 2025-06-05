@@ -7,7 +7,57 @@
         "info": ""
     },
     {
-        "id": "2c9263a2d7e089f7",
+        "id": "3abb401e375dfd16",
+        "type": "debug",
+        "z": "f1e1d4d0b3d8d7a1",
+        "name": "debug 5",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 216,
+        "y": 118.00000953674316,
+        "wires": []
+    },
+    {
+        "id": "efa49f10a6cbc957",
+        "type": "debug",
+        "z": "f1e1d4d0b3d8d7a1",
+        "name": "debug 6",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "e11598bb0f87d32e",
+        "type": "mqtt out",
+        "z": "f1e1d4d0b3d8d7a1",
+        "name": "Publish to LED Set",
+        "topic": "esp32/switch/light/command",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "c2d6c3b7.d1a3c",
+        "x": 650,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "99b48f10351f3fd5",
         "type": "mqtt in",
         "z": "f1e1d4d0b3d8d7a1",
         "name": "LED State IN",
@@ -20,43 +70,16 @@
         "rh": 0,
         "inputs": 0,
         "x": 90,
-        "y": 100,
+        "y": 60,
         "wires": [
             [
-                "a2c8e7e2f7b6972d",
+                "0b0c83cd6dec0656",
                 "3abb401e375dfd16"
             ]
         ]
     },
     {
-        "id": "a2c8e7e2f7b6972d",
-        "type": "change",
-        "z": "f1e1d4d0b3d8d7a1",
-        "name": "Set UI switch state",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "($string(payload) = \"ON\") ? true : false",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 210,
-        "y": 40,
-        "wires": [
-            [
-                "bc071c15ccf6c5e4"
-            ]
-        ]
-    },
-    {
-        "id": "bc071c15ccf6c5e4",
+        "id": "0b0c83cd6dec0656",
         "type": "ui_switch",
         "z": "f1e1d4d0b3d8d7a1",
         "name": "LED Control",
@@ -71,101 +94,24 @@
         "topic": "",
         "topicType": "str",
         "style": "",
-        "onvalue": "true",
-        "onvalueType": "bool",
+        "onvalue": "ON",
+        "onvalueType": "str",
         "onicon": "",
         "oncolor": "",
-        "offvalue": "false",
-        "offvalueType": "bool",
+        "offvalue": "OFF",
+        "offvalueType": "str",
         "officon": "",
         "offcolor": "",
         "animate": false,
         "className": "",
-        "x": 330,
-        "y": 100,
+        "x": 370,
+        "y": 60,
         "wires": [
             [
-                "d9e7f95cfb2f28e5"
-            ]
-        ]
-    },
-    {
-        "id": "d9e7f95cfb2f28e5",
-        "type": "change",
-        "z": "f1e1d4d0b3d8d7a1",
-        "name": "Map true/false to ON/OFF",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "($boolean(payload) = true) ? \"ON\" : \"OFF\"",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 510,
-        "y": 40,
-        "wires": [
-            [
-                "c10e6c5a9a2e621c",
+                "e11598bb0f87d32e",
                 "efa49f10a6cbc957"
             ]
         ]
-    },
-    {
-        "id": "c10e6c5a9a2e621c",
-        "type": "mqtt out",
-        "z": "f1e1d4d0b3d8d7a1",
-        "name": "Publish to LED Set",
-        "topic": "esp32/switch/light/command",
-        "qos": "0",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "c2d6c3b7.d1a3c",
-        "x": 630,
-        "y": 100,
-        "wires": []
-    },
-    {
-        "id": "3abb401e375dfd16",
-        "type": "debug",
-        "z": "f1e1d4d0b3d8d7a1",
-        "name": "debug 5",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 200,
-        "y": 160,
-        "wires": []
-    },
-    {
-        "id": "efa49f10a6cbc957",
-        "type": "debug",
-        "z": "f1e1d4d0b3d8d7a1",
-        "name": "debug 6",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 540,
-        "y": 160,
-        "wires": []
     },
     {
         "id": "c2d6c3b7.d1a3c",
