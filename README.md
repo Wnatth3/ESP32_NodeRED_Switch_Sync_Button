@@ -13,7 +13,7 @@ This sketch enables an ESP32 to control and synchronize a light switch via MQTT,
 - **Libraries:**
     - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
     - [WiFiManager](https://github.com/tzapu/WiFiManager)
-    - [LittleFS_esp32](https://github.com/lorol/LITTLEFS)
+    - LittleFS
     - [PubSubClient](https://github.com/knolleary/pubsubclient)
     - [Button2](https://github.com/LennartHennigs/Button2)
     - [ezLED](https://github.com/raphaelbs/ezLED)
