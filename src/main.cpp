@@ -130,7 +130,7 @@ void loadState(const char* fileName) {
     file.close();
 }
 
-void saveState(const char* fileName) {
+void saveState(bool val, const char* key, const char* fileName) {
     File file = LittleFS.open(fileName, "w");
     if (!file) {
         _deln("Failed to open " + String(fileName) + " for writing");
@@ -138,7 +138,7 @@ void saveState(const char* fileName) {
     }
 
     JsonDocument doc;
-    doc["lightState"] = lightState;
+    doc[key] = val;
 
     if (serializeJson(doc, file) == 0) _deln("Failed to write to " + String(fileName));
 
@@ -157,7 +157,7 @@ void handleMqttMessage(char* topic, byte* payload, unsigned int length) {
 
     if (String(topic) == subLightCommand) {
         digitalWrite(lightPin, lightState = message == "ON" ? true : false);
-        saveState(stateFile);
+        saveState(lightState, "lightState", stateFile);
     }
 }
 
@@ -167,7 +167,6 @@ void mqttInit() {
         _delnF("available");
         mqtt.setCallback(handleMqttMessage);
         mqtt.setServer(mqttBroker, atoi(mqttPort));
-        // tConnectMqtt.start();
     } else {
         _delnF("not available.");
     }
@@ -356,10 +355,9 @@ void resetWifiBtPressed(Button2& btn) {
 }
 
 void toggleLight(Button2& btn) {
-    // light.toggle();
     lightState = !lightState;
     digitalWrite(lightPin, lightState);
-    saveState(stateFile);
+    saveState(lightState, "lightState", stateFile);
     mqtt.publish(pubLightState, lightState ? "ON" : "OFF");
 }
 
